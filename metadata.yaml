@@ -1,0 +1,5 @@
+homepage: "https://stape.io/"
+documentation: "https://github.com/stape-io/pipedrive-tag"
+versions:
+  - sha: ed15768a14c075d5cbaf625492140ef6305fa2cb
+    changeNotes: Initial release.
