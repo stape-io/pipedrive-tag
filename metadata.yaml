@@ -1,6 +1,8 @@
 homepage: "https://stape.io/"
 documentation: "https://github.com/stape-io/pipedrive-tag"
 versions:
+  - sha: 90ee2c26f75fc7a2ad0b7f60f553d3e3d9325d83
+    changeNotes: Fix tag naming.
   - sha: 9c146321a7a95e5ddddc503398d39a78468669c6
     changeNotes: Fix issue with empty data table with fields.
   - sha: ed15768a14c075d5cbaf625492140ef6305fa2cb
