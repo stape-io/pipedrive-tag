@@ -21,7 +21,7 @@ if (data.type === 'lead') {
 
 function createPerson() {
   const requestUrl = 'https://api.pipedrive.com/v1/persons?api_token=' + enc(data.apiToken);
-  const postBody = makeTableMap(data.person || [], 'field', 'value');
+  const postBody = makeTableMap(data.person || [], 'field', 'value') || {};
 
   if (data.name) postBody.name = data.name;
   if (data.email) postBody.email = [data.email];
@@ -81,7 +81,7 @@ function createPerson() {
 
 function createLead() {
   const requestUrl = 'https://api.pipedrive.com/v1/leads?api_token=' + enc(data.apiToken);
-  const postBody = makeTableMap(data.lead || [], 'field', 'value');
+  const postBody = makeTableMap(data.lead || [], 'field', 'value') || {};
 
   if (data.leadName) postBody.name = data.leadName;
 
