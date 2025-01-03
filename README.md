@@ -1,8 +1,17 @@
 # PipeDrive tag for Google Tag Manager Server Side
 
-## How to use the PipeDrive tag:
+The PipeDrive tag for the server GTM communicates with the PipeDrive API.
 
-TBD
+#### You can use this tag for:
+
+- Create new contacts
+- Create new leads
+
+## How to use PipeDrive tag
+
+1. Add PipeDrive tag to the server GTM.
+2. Add PipeDrive API Key.
+3. Add contact email.
 
 ## Open Source
 
