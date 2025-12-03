@@ -1,7 +1,7 @@
 homepage: "https://stape.io/"
 documentation: "https://github.com/stape-io/pipedrive-tag"
 versions:
-  - sha: d80e5fe51464a8402781af7c6a842f9015469148
+  - sha: 1ffa603e8e6ef3b96c4e166b8291d5b46c6af0dc
     changeNotes: Person API version Bump and Fixed Lead section.
   - sha: 90ee2c26f75fc7a2ad0b7f60f553d3e3d9325d83
     changeNotes: Fix tag naming.
