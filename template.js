@@ -8,18 +8,23 @@ const makeTableMap = require('makeTableMap');
 const getTimestampMillis = require('getTimestampMillis');
 const BigQuery = require('BigQuery');
 const getAllEventData = require('getAllEventData');
+const Promise = require('Promise');
+const makeNumber = require('makeNumber');
 
 /*==============================================================================
 ==============================================================================*/
 
 const eventData = getAllEventData();
+let person;
+let lead;
 
-checkGuardClauses();
+if (checkGuardClauses()) return;
+
+if (data.type === 'person') createPerson();
 
 if (data.type === 'lead') {
-  createLead(createPerson());
-} else {
-  createPerson();
+  if (data.createPerson) createPerson();
+  else createLead();
 }
 
 if (data.useOptimisticScenario) {
@@ -31,15 +36,25 @@ VENDOR RELATED FUNCTIONS
 ==============================================================================*/
 
 function createPerson() {
-  const requestUrl = 'https://api.pipedrive.com/v2/persons?api_token=' + enc(data.apiToken);
+  const requestUrl = 'https://api.pipedrive.com/api/v2/persons';
   const postBody = makeTableMap(data.person || [], 'field', 'value') || {};
+  const requestOptions = {
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      'x-api-token': data.apiToken
+    },
+    method: 'POST'
+  };
 
-  if (data.name) postBody.name = data.name;
-  if (data.email) postBody.emails = [data.email];
-  if (data.phone) postBody.phones = [data.phone];
+  if (data.name || data.newLeadFullName) postBody.name = data.name || data.newLeadFullName;
+  if (data.newLeadFirstName) postBody.first_name = data.newLeadFirstName;
+  if (data.newLeadLastName) postBody.last_name = data.newLeadLastName;
+  if (data.email) postBody.emails = [{ value: data.email }];
+  if (data.phone) postBody.phones = [{ value: data.phone }];
 
   log({
-    Name: 'PipeDrive',
+    Name: 'Pipedrive',
     Type: 'Request',
     EventName: 'Person',
     RequestMethod: 'POST',
@@ -47,47 +62,78 @@ function createPerson() {
     RequestBody: postBody
   });
 
-  return sendHttpRequest(
-    requestUrl,
-    (statusCode, headers, body) => {
+  return sendHttpRequest(requestUrl, requestOptions, JSON.stringify(postBody))
+    .then((response) => {
+      const body = JSON.parse(response.body);
       log({
-        Name: 'PipeDrive',
+        Name: 'Pipedrive',
         Type: 'Response',
         EventName: 'Person',
-        ResponseStatusCode: statusCode,
-        ResponseHeaders: headers,
-        ResponseBody: body
+        ResponseStatusCode: response.statusCode,
+        ResponseHeaders: response.headers,
+        ResponseBody: response.body
       });
 
-      if (statusCode >= 200 && statusCode < 303) {
+      if (body.success) {
         if (data.type === 'lead') {
-          return JSON.parse(body).data.id;
+          const personId = body.data.id;
+          const organizationId = body.data.org_id;
+          return createLead(personId, organizationId);
         } else {
           data.gtmOnSuccess();
         }
       } else {
-        data.gtmOnFailure();
+        log({
+          Name: 'Pipedrive',
+          Type: 'Message',
+          EventName: 'Lead',
+          Message: body.code,
+          Reason: body.error
+        });
+        return data.gtmOnFailure();
       }
-    },
-    {
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
-      },
-      method: 'POST'
-    },
-    JSON.stringify(postBody)
-  );
+    })
+    .catch((error) => {
+      log({
+        Name: 'Pipedrive',
+        Type: 'Message',
+        EventName: 'Person',
+        Message: 'API call failed or timed out',
+        Reason: error.reason
+      });
+    });
 }
 
-function createLead() {
-  const requestUrl = 'https://api.pipedrive.com/v1/leads?api_token=' + enc(data.apiToken);
+function createLead(personId, organizationId) {
+  const requestUrl = 'https://api.pipedrive.com/v1/leads';
   const postBody = makeTableMap(data.lead || [], 'field', 'value') || {};
+  const requestOptions = {
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      'x-api-token': data.apiToken
+    },
+    method: 'POST'
+  };
 
-  if (data.leadName) postBody.name = data.leadName;
+  if (!data.title) {
+    log({
+      Name: 'Pipedrive',
+      Type: 'Message',
+      EventName: 'Lead',
+      Message: 'API not called',
+      Reason: 'Title is required for creating Lead'
+    });
+    return data.gtmOnFailure();
+  }
+  personId = personId || data.personId;
+  organizationId = organizationId || data.organizationId;
+  postBody.title = data.title;
+  if (personId) postBody.person_id = makeNumber(personId);
+  if (organizationId) postBody.organization_id = makeNumber(organizationId);
 
   log({
-    Name: 'PipeDrive',
+    Name: 'Pipedrive',
     Type: 'Request',
     EventName: 'Lead',
     RequestMethod: 'POST',
@@ -95,33 +141,40 @@ function createLead() {
     RequestBody: postBody
   });
 
-  return sendHttpRequest(
-    requestUrl,
-    (statusCode, headers, body) => {
+  return sendHttpRequest(requestUrl, requestOptions, JSON.stringify(postBody))
+    .then((response) => {
+      const body = JSON.parse(response.body);
       log({
-        Name: 'PipeDrive',
+        Name: 'Pipedrive',
         Type: 'Response',
         EventName: 'Lead',
-        ResponseStatusCode: statusCode,
-        ResponseHeaders: headers,
-        ResponseBody: body
+        ResponseStatusCode: response.statusCode,
+        ResponseHeaders: response.headers,
+        ResponseBody: response.body
       });
 
-      if (statusCode >= 200 && statusCode < 303) {
-        data.gtmOnSuccess();
+      if (body.success) {
+        return data.gtmOnSuccess();
       } else {
-        data.gtmOnFailure();
+        log({
+          Name: 'Pipedrive',
+          Type: 'Message',
+          EventName: 'Lead',
+          Message: body.code,
+          Reason: body.error
+        });
+        return data.gtmOnFailure();
       }
-    },
-    {
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
-      },
-      method: 'POST'
-    },
-    JSON.stringify(postBody)
-  );
+    })
+    .catch((error) => {
+      log({
+        Name: 'Pipedrive',
+        Type: 'Message',
+        EventName: 'Lead',
+        Message: 'API call failed or timed out',
+        Reason: error.reason
+      });
+    });
 }
 
 /*==============================================================================
@@ -130,19 +183,46 @@ HELPERS
 
 function checkGuardClauses() {
   const url = eventData.page_location || getRequestHeader('referer');
+  const createPersonRequirement =
+    !(data.newLeadFullName || (data.newLeadFirstName && data.newLeadLastName)) ||
+    (data.newLeadFullName && (data.newLeadFirstName || data.newLeadLastName));
 
   if (!isConsentGivenOrNotRequired(data, eventData)) {
-    return data.gtmOnSuccess();
+    data.gtmOnSuccess();
+    return true;
   }
 
   if (url && url.lastIndexOf('https://gtm-msr.appspot.com/', 0) === 0) {
-    return data.gtmOnSuccess();
+    data.gtmOnSuccess();
+    return true;
   }
-}
 
-function enc(data) {
-  data = data || '';
-  return encodeUriComponent(data);
+  if (data.createPerson && createPersonRequirement) {
+    log({
+      Name: 'Pipedrive',
+      Type: 'Message',
+      EventName: 'Lead',
+      Message: 'API not called',
+      Reason: 'Provide either Full Name OR both First Name and Last Name to create a new Person.'
+    });
+    data.gtmOnFailure();
+    return true;
+  }
+
+  if (data.type === 'lead' && !data.createPerson) {
+    if (!data.personId && !data.organizationId) {
+      //requirement for lead request
+      log({
+        Name: 'Pipedrive',
+        Type: 'Message',
+        EventName: 'Lead',
+        Message: 'API not called',
+        Reason: 'Person ID or Organization ID must be set to create a Lead.'
+      });
+      data.gtmOnFailure();
+      return true;
+    }
+  }
 }
 
 function isConsentGivenOrNotRequired(data, eventData) {
@@ -157,7 +237,7 @@ function log(rawDataToLog) {
   if (determinateIsLoggingEnabled()) logDestinationsHandlers.console = logConsole;
   if (determinateIsLoggingEnabledForBigQuery()) logDestinationsHandlers.bigQuery = logToBigQuery;
 
-  rawDataToLog.TraceId = getRequestHeader('trace-id');
+  //rawDataToLog.TraceId = getRequestHeader('trace-id');
 
   const keyMappings = {
     // No transformation for Console is needed.
@@ -215,7 +295,10 @@ function logToBigQuery(dataToLog) {
 
 function determinateIsLoggingEnabled() {
   const containerVersion = getContainerVersion();
-  const isDebug = !!(containerVersion && (containerVersion.debugMode || containerVersion.previewMode));
+  const isDebug = !!(
+    containerVersion &&
+    (containerVersion.debugMode || containerVersion.previewMode)
+  );
 
   if (!data.logType) {
     return isDebug;

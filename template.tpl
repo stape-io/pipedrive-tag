@@ -30,47 +30,55 @@ ___TEMPLATE_PARAMETERS___
 
 [
   {
-    "type": "RADIO",
-    "name": "type",
-    "displayName": "Type",
-    "radioItems": [
+    "type": "GROUP",
+    "name": "configGroup",
+    "displayName": "",
+    "groupStyle": "NO_ZIPPY",
+    "subParams": [
       {
-        "value": "person",
-        "displayValue": "Create Person"
+        "type": "RADIO",
+        "name": "type",
+        "displayName": "Type",
+        "radioItems": [
+          {
+            "value": "person",
+            "displayValue": "Create Person"
+          },
+          {
+            "value": "lead",
+            "displayValue": "Create Lead"
+          }
+        ],
+        "simpleValueType": true,
+        "help": "If you choose a Lead, it will also create a person automatically, as the Lead requires a person to associate with.",
+        "defaultValue": "lead"
       },
       {
-        "value": "lead",
-        "displayValue": "Create Lead"
+        "type": "TEXT",
+        "name": "apiToken",
+        "displayName": "API Token",
+        "simpleValueType": true,
+        "help": "More info about how to get API Token can be found \u003ca href\u003d\"https://support.pipedrive.com/en/article/how-can-i-find-my-personal-api-key\" target\u003d\"_blank\"\u003eby this link\u003c/a\u003e."
+      },
+      {
+        "type": "CHECKBOX",
+        "name": "useOptimisticScenario",
+        "checkboxText": "Use Optimistic Scenario",
+        "simpleValueType": true,
+        "help": "The tag will call gtmOnSuccess() without waiting for a response from the API. This will speed up sGTM response time however your tag will always return the status fired successfully even in case it is not."
       }
-    ],
-    "simpleValueType": true,
-    "help": "If you choose a Lead, it will also create a person automatically, as the Lead requires a person to associate with.",
-    "defaultValue": "lead"
-  },
-  {
-    "type": "TEXT",
-    "name": "apiToken",
-    "displayName": "API Token",
-    "simpleValueType": true,
-    "help": "More info about how to get API Token can be found \u003ca href\u003d\"https://support.pipedrive.com/en/article/how-can-i-find-my-personal-api-key\" target\u003d\"_blank\"\u003eby this link\u003c/a\u003e."
-  },
-  {
-    "type": "CHECKBOX",
-    "name": "useOptimisticScenario",
-    "checkboxText": "Use Optimistic Scenario",
-    "simpleValueType": true,
-    "help": "The tag will call gtmOnSuccess() without waiting for a response from the API. This will speed up sGTM response time however your tag will always return the status fired successfully even in case it is not."
+    ]
   },
   {
     "type": "GROUP",
-    "name": "personGroup",
+    "name": "createPersonGroup",
     "displayName": "Person",
-    "groupStyle": "ZIPPY_CLOSED",
+    "groupStyle": "ZIPPY_OPEN",
     "subParams": [
       {
         "type": "LABEL",
         "name": "personLabel",
-        "displayName": "More info about the Person Fields can be found \u003ca href\u003d\"https://developers.pipedrive.com/docs/api/v1/Persons#addPerson\" target\u003d\"_blank\"\u003eby this link\u003c/a\u003e."
+        "displayName": "More info about the Person Fields can be found \u003ca href\u003d\"https://developers.pipedrive.com/docs/api/v1/Persons#addPerson\" \u003ehere\u003c/a\u003e."
       },
       {
         "type": "TEXT",
@@ -106,29 +114,117 @@ ___TEMPLATE_PARAMETERS___
             "name": "value",
             "type": "TEXT"
           }
-        ]
+        ],
+        "help": "Check \u003ca href\u003d\"https://developers.pipedrive.com/docs/api/v1/Persons\"\u003e this documentation\u003c/a\u003e for expected parameters. Bear in mind that if using any unsupported parameter the API call will fail.",
+        "displayName": "Additional parameters"
+      }
+    ],
+    "enablingConditions": [
+      {
+        "paramName": "type",
+        "paramValue": "person",
+        "type": "EQUALS"
       }
     ]
   },
   {
     "type": "GROUP",
-    "name": "leadGroup",
+    "name": "createLeadGroup",
     "displayName": "Lead",
-    "groupStyle": "ZIPPY_CLOSED",
+    "groupStyle": "ZIPPY_OPEN",
     "subParams": [
       {
         "type": "LABEL",
         "name": "leadLabel",
-        "displayName": "More info about the Lead Fields can be found \u003ca href\u003d\"https://developers.pipedrive.com/docs/api/v1/Leads#addLead\" target\u003d\"_blank\"\u003eby this link\u003c/a\u003e."
+        "displayName": "More info about the Lead Fields can be found \u003ca href\u003d\"https://developers.pipedrive.com/docs/api/v1/Leads#addLead\"\u003ehere\u003c/a\u003e."
       },
       {
         "type": "TEXT",
-        "name": "leadName",
-        "displayName": "Title",
+        "name": "title",
+        "displayName": "Title (Required)",
         "simpleValueType": true,
         "valueValidators": [
           {
             "type": "NON_EMPTY"
+          }
+        ]
+      },
+      {
+        "type": "TEXT",
+        "name": "personId",
+        "displayName": "Person ID",
+        "simpleValueType": true,
+        "help": "Required if \u003cb\u003eOrganization ID\u003c/b\u003e is not set. It must match the \u003cb\u003ePerson ID\u003c/b\u003e in your Pipedrive People list.",
+        "enablingConditions": [
+          {
+            "paramName": "createPerson",
+            "paramValue": false,
+            "type": "EQUALS"
+          }
+        ]
+      },
+      {
+        "type": "TEXT",
+        "name": "organizationId",
+        "displayName": "Organization ID",
+        "simpleValueType": true,
+        "help": "Required if \u003cb\u003ePerson ID\u003c/b\u003e is not set. It must match the \u003cb\u003eOrganization ID\u003c/b\u003e in your Pipedrive Organizations list.",
+        "enablingConditions": [
+          {
+            "paramName": "createPerson",
+            "paramValue": false,
+            "type": "EQUALS"
+          }
+        ]
+      },
+      {
+        "type": "CHECKBOX",
+        "name": "createPerson",
+        "checkboxText": "Create new person?",
+        "simpleValueType": true,
+        "help": "Check this if you want to create a new Person registry AND make it into a Lead. If this is not checked, bear in mind that you have to set one of the above fields (Person ID or Organization ID) for an existing Person in your Pipedrive Contacts list.",
+        "subParams": [
+          {
+            "type": "TEXT",
+            "name": "newLeadFullName",
+            "displayName": "Full Name",
+            "simpleValueType": true,
+            "enablingConditions": [
+              {
+                "paramName": "createPerson",
+                "paramValue": true,
+                "type": "EQUALS"
+              }
+            ],
+            "help": "Required either the lead \u003cb\u003eFull  Name\u003c/b\u003e or a combination of \u003cb\u003eFirst Name/\u003e and \u003cb\u003eLast Name\u003c/b\u003e. API call will fail if using Full Name combined with either First Name or Last Name."
+          },
+          {
+            "type": "TEXT",
+            "name": "newLeadFirstName",
+            "displayName": "First Name",
+            "simpleValueType": true,
+            "enablingConditions": [
+              {
+                "paramName": "createPerson",
+                "paramValue": true,
+                "type": "EQUALS"
+              }
+            ],
+            "help": "Required either the lead \u003cb\u003eFull  Name\u003c/b\u003e or a combination of \u003cb\u003eFirst Name/\u003e and \u003cb\u003eLast Name\u003c/b\u003e. API call will fail if using Full Name combined with either First Name or Last Name."
+          },
+          {
+            "type": "TEXT",
+            "name": "newLeadLastName",
+            "displayName": "Last Name",
+            "simpleValueType": true,
+            "enablingConditions": [
+              {
+                "paramName": "createPerson",
+                "paramValue": true,
+                "type": "EQUALS"
+              }
+            ],
+            "help": "Required either the lead \u003cb\u003eFull  Name\u003c/b\u003e or a combination of \u003cb\u003eFirst Name/\u003e and \u003cb\u003eLast Name\u003c/b\u003e. API call will fail if using Full Name combined with either First Name or Last Name."
           }
         ]
       },
@@ -140,7 +236,8 @@ ___TEMPLATE_PARAMETERS___
             "defaultValue": "",
             "displayName": "Field",
             "name": "field",
-            "type": "TEXT"
+            "type": "TEXT",
+            "isUnique": true
           },
           {
             "defaultValue": "",
@@ -148,7 +245,10 @@ ___TEMPLATE_PARAMETERS___
             "name": "value",
             "type": "TEXT"
           }
-        ]
+        ],
+        "newRowButtonText": "Add Parameter",
+        "displayName": "Additional Parameters",
+        "help": "Check \u003ca href\u003d\"https://developers.pipedrive.com/docs/api/v1/Leads\"\u003e this documentation\u003c/a\u003e for expected parameters. Bear in mind that if using any unsupported parameter the API call will fail."
       }
     ],
     "enablingConditions": [
@@ -294,18 +394,23 @@ const makeTableMap = require('makeTableMap');
 const getTimestampMillis = require('getTimestampMillis');
 const BigQuery = require('BigQuery');
 const getAllEventData = require('getAllEventData');
+const Promise = require('Promise');
+const makeNumber = require('makeNumber');
 
 /*==============================================================================
 ==============================================================================*/
 
 const eventData = getAllEventData();
+let person;
+let lead;
 
-checkGuardClauses();
+if (checkGuardClauses()) return;
+
+if (data.type === 'person') createPerson();
 
 if (data.type === 'lead') {
-  createLead(createPerson());
-} else {
-  createPerson();
+  if (data.createPerson) createPerson();
+  else createLead();
 }
 
 if (data.useOptimisticScenario) {
@@ -317,15 +422,25 @@ VENDOR RELATED FUNCTIONS
 ==============================================================================*/
 
 function createPerson() {
-  const requestUrl = 'https://api.pipedrive.com/v2/persons?api_token=' + enc(data.apiToken);
+  const requestUrl = 'https://api.pipedrive.com/api/v2/persons';
   const postBody = makeTableMap(data.person || [], 'field', 'value') || {};
+  const requestOptions = {
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      'x-api-token': data.apiToken
+    },
+    method: 'POST'
+  };
 
-  if (data.name) postBody.name = data.name;
-  if (data.email) postBody.emails = [data.email];
-  if (data.phone) postBody.phones = [data.phone];
+  if (data.name || data.newLeadFullName) postBody.name = data.name || data.newLeadFullName;
+  if (data.newLeadFirstName) postBody.first_name = data.newLeadFirstName;
+  if (data.newLeadLastName) postBody.last_name = data.newLeadLastName;
+  if (data.email) postBody.emails = [{ value: data.email }];
+  if (data.phone) postBody.phones = [{ value: data.phone }];
 
   log({
-    Name: 'PipeDrive',
+    Name: 'Pipedrive',
     Type: 'Request',
     EventName: 'Person',
     RequestMethod: 'POST',
@@ -333,47 +448,78 @@ function createPerson() {
     RequestBody: postBody
   });
 
-  return sendHttpRequest(
-    requestUrl,
-    (statusCode, headers, body) => {
+  return sendHttpRequest(requestUrl, requestOptions, JSON.stringify(postBody))
+    .then((response) => {
+      const body = JSON.parse(response.body);
       log({
-        Name: 'PipeDrive',
+        Name: 'Pipedrive',
         Type: 'Response',
         EventName: 'Person',
-        ResponseStatusCode: statusCode,
-        ResponseHeaders: headers,
-        ResponseBody: body
+        ResponseStatusCode: response.statusCode,
+        ResponseHeaders: response.headers,
+        ResponseBody: response.body
       });
 
-      if (statusCode >= 200 && statusCode < 303) {
+      if (body.success) {
         if (data.type === 'lead') {
-          return JSON.parse(body).data.id;
+          const personId = body.data.id;
+          const organizationId = body.data.org_id;
+          return createLead(personId, organizationId);
         } else {
           data.gtmOnSuccess();
         }
       } else {
-        data.gtmOnFailure();
+        log({
+          Name: 'Pipedrive',
+          Type: 'Message',
+          EventName: 'Lead',
+          Message: body.code,
+          Reason: body.error
+        });
+        return data.gtmOnFailure();
       }
-    },
-    {
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
-      },
-      method: 'POST'
-    },
-    JSON.stringify(postBody)
-  );
+    })
+    .catch((error) => {
+      log({
+        Name: 'Pipedrive',
+        Type: 'Message',
+        EventName: 'Person',
+        Message: 'API call failed or timed out',
+        Reason: error.reason
+      });
+    });
 }
 
-function createLead() {
-  const requestUrl = 'https://api.pipedrive.com/v1/leads?api_token=' + enc(data.apiToken);
+function createLead(personId, organizationId) {
+  const requestUrl = 'https://api.pipedrive.com/v1/leads';
   const postBody = makeTableMap(data.lead || [], 'field', 'value') || {};
+  const requestOptions = {
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      'x-api-token': data.apiToken
+    },
+    method: 'POST'
+  };
 
-  if (data.leadName) postBody.name = data.leadName;
+  if (!data.title) {
+    log({
+      Name: 'Pipedrive',
+      Type: 'Message',
+      EventName: 'Lead',
+      Message: 'API not called',
+      Reason: 'Title is required for creating Lead'
+    });
+    return data.gtmOnFailure();
+  }
+  personId = personId || data.personId;
+  organizationId = organizationId || data.organizationId;
+  postBody.title = data.title;
+  if (personId) postBody.person_id = makeNumber(personId);
+  if (organizationId) postBody.organization_id = makeNumber(organizationId);
 
   log({
-    Name: 'PipeDrive',
+    Name: 'Pipedrive',
     Type: 'Request',
     EventName: 'Lead',
     RequestMethod: 'POST',
@@ -381,33 +527,40 @@ function createLead() {
     RequestBody: postBody
   });
 
-  return sendHttpRequest(
-    requestUrl,
-    (statusCode, headers, body) => {
+  return sendHttpRequest(requestUrl, requestOptions, JSON.stringify(postBody))
+    .then((response) => {
+      const body = JSON.parse(response.body);
       log({
-        Name: 'PipeDrive',
+        Name: 'Pipedrive',
         Type: 'Response',
         EventName: 'Lead',
-        ResponseStatusCode: statusCode,
-        ResponseHeaders: headers,
-        ResponseBody: body
+        ResponseStatusCode: response.statusCode,
+        ResponseHeaders: response.headers,
+        ResponseBody: response.body
       });
 
-      if (statusCode >= 200 && statusCode < 303) {
-        data.gtmOnSuccess();
+      if (body.success) {
+        return data.gtmOnSuccess();
       } else {
-        data.gtmOnFailure();
+        log({
+          Name: 'Pipedrive',
+          Type: 'Message',
+          EventName: 'Lead',
+          Message: body.code,
+          Reason: body.error
+        });
+        return data.gtmOnFailure();
       }
-    },
-    {
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json'
-      },
-      method: 'POST'
-    },
-    JSON.stringify(postBody)
-  );
+    })
+    .catch((error) => {
+      log({
+        Name: 'Pipedrive',
+        Type: 'Message',
+        EventName: 'Lead',
+        Message: 'API call failed or timed out',
+        Reason: error.reason
+      });
+    });
 }
 
 /*==============================================================================
@@ -416,19 +569,46 @@ HELPERS
 
 function checkGuardClauses() {
   const url = eventData.page_location || getRequestHeader('referer');
+  const createPersonRequirement =
+    !(data.newLeadFullName || (data.newLeadFirstName && data.newLeadLastName)) ||
+    (data.newLeadFullName && (data.newLeadFirstName || data.newLeadLastName));
 
   if (!isConsentGivenOrNotRequired(data, eventData)) {
-    return data.gtmOnSuccess();
+    data.gtmOnSuccess();
+    return true;
   }
 
   if (url && url.lastIndexOf('https://gtm-msr.appspot.com/', 0) === 0) {
-    return data.gtmOnSuccess();
+    data.gtmOnSuccess();
+    return true;
   }
-}
 
-function enc(data) {
-  data = data || '';
-  return encodeUriComponent(data);
+  if (data.createPerson && createPersonRequirement) {
+    log({
+      Name: 'Pipedrive',
+      Type: 'Message',
+      EventName: 'Lead',
+      Message: 'API not called',
+      Reason: 'Provide either Full Name OR both First Name and Last Name to create a new Person.'
+    });
+    data.gtmOnFailure();
+    return true;
+  }
+
+  if (data.type === 'lead' && !data.createPerson) {
+    if (!data.personId && !data.organizationId) {
+      //requirement for lead request
+      log({
+        Name: 'Pipedrive',
+        Type: 'Message',
+        EventName: 'Lead',
+        Message: 'API not called',
+        Reason: 'Person ID or Organization ID must be set to create a Lead.'
+      });
+      data.gtmOnFailure();
+      return true;
+    }
+  }
 }
 
 function isConsentGivenOrNotRequired(data, eventData) {
@@ -443,7 +623,7 @@ function log(rawDataToLog) {
   if (determinateIsLoggingEnabled()) logDestinationsHandlers.console = logConsole;
   if (determinateIsLoggingEnabledForBigQuery()) logDestinationsHandlers.bigQuery = logToBigQuery;
 
-  rawDataToLog.TraceId = getRequestHeader('trace-id');
+  //rawDataToLog.TraceId = getRequestHeader('trace-id');
 
   const keyMappings = {
     // No transformation for Console is needed.
@@ -501,7 +681,10 @@ function logToBigQuery(dataToLog) {
 
 function determinateIsLoggingEnabled() {
   const containerVersion = getContainerVersion();
-  const isDebug = !!(containerVersion && (containerVersion.debugMode || containerVersion.previewMode));
+  const isDebug = !!(
+    containerVersion &&
+    (containerVersion.debugMode || containerVersion.previewMode)
+  );
 
   if (!data.logType) {
     return isDebug;
@@ -551,6 +734,21 @@ ___SERVER_PERMISSIONS___
                   {
                     "type": 1,
                     "string": "trace-id"
+                  }
+                ]
+              },
+              {
+                "type": 3,
+                "mapKey": [
+                  {
+                    "type": 1,
+                    "string": "headerName"
+                  }
+                ],
+                "mapValue": [
+                  {
+                    "type": 1,
+                    "string": "referer"
                   }
                 ]
               }

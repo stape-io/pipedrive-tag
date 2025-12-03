@@ -1,18 +1,43 @@
-# PipeDrive tag for Google Tag Manager Server Side
+# Pipedrive Tag for GTM Server-Side
 
-The PipeDrive tag for the server GTM communicates with the PipeDrive API.
+This server-side tag allows you to create new persons and leads in Pipedrive directly from your Google Tag Manager Server container.
 
-#### You can use this tag for:
+## Features
+* **Entity Creation**: Supports creating **Persons** and **Leads**.
+* **Optimistic Scenario**: Option to trigger `gtmOnSuccess()` immediately without waiting for the API response to speed up response times.
+* **Consent Checks**: Built-in support for checking `ad_storage` consent before execution.
+* **BigQuery Logging**: Native support for streaming request and response data to BigQuery.
 
-- Create new contacts
-- Create new leads
+## Configuration
 
-## How to use PipeDrive tag
+### 1. General Settings
+* **Type**: Select whether to create a **Person** or a **Lead**.
+* **API Token**: Enter your Pipedrive API Personal API Key.
+* **Use Optimistic Scenario**: Check to fire the tag success trigger regardless of the actual API result.
 
-1. Add PipeDrive tag to the server GTM.
-2. Add PipeDrive API Key.
-3. Add contact email.
+### 2. Person Configuration
+* **Standard Fields**: Map specific fields for **Name**, **Email**, and **Phone**.
+* **Additional Parameters**: Use the table to map custom fields (Field ID and Value) supported by the Pipedrive Persons API.
 
-## Open Source
+### 3. Lead Configuration
+* **Title**: Required field for the lead title.
+* **Association**: You must associate the lead by providing either a **Person ID** or an **Organization ID**.
+* **Create new person?**: If enabled, allows you to create a new Person registry simultaneously and link it to the Lead.
+    * Requires **Full Name** or a combination of **First Name** and **Last Name**.
+* **Additional Parameters**: Use the table to map custom parameters for the Leads API.
 
-PipeDrive Tag for GTM Server Side is developed and maintained by [Stape Team](https://stape.io/) under the Apache 2.0 license.
+### 4. Consent Settings
+* **Ad Storage Consent**: Choose "Send data in case marketing consent given" to abort execution if `ad_storage` is not granted.
+
+### 5. Logging
+* **Logs Settings**: Options to log to console "Always", "Never", or during "Debug and preview".
+* **BigQuery Logs**: Enable to log full event data to a BigQuery table.
+    * **Project ID**: Defaults to the environment variable `GOOGLE_CLOUD_PROJECT` if left empty.
+    * **Dataset ID**: Required.
+    * **Table ID**: Required.
+
+## Permissions
+This template requires the following permissions:
+* **Access to Global Variables**: Reads event data and container version.
+* **Send HTTP Requests**: Grants access to `https://api.pipedrive.com/`.
+* **Access BigQuery**: Requires `write` access if BigQuery logging is enabled.
