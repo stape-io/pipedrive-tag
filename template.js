@@ -1,14 +1,12 @@
 ﻿const sendHttpRequest = require('sendHttpRequest');
 const JSON = require('JSON');
 const getRequestHeader = require('getRequestHeader');
-const encodeUriComponent = require('encodeUriComponent');
 const logToConsole = require('logToConsole');
 const getContainerVersion = require('getContainerVersion');
 const makeTableMap = require('makeTableMap');
 const getTimestampMillis = require('getTimestampMillis');
 const BigQuery = require('BigQuery');
 const getAllEventData = require('getAllEventData');
-const Promise = require('Promise');
 const makeNumber = require('makeNumber');
 
 /*==============================================================================
