@@ -1,6 +1,8 @@
-homepage: "https://stape.io/"
-documentation: "https://github.com/stape-io/pipedrive-tag"
+homepage: 'https://stape.io/'
+documentation: 'https://github.com/stape-io/pipedrive-tag'
 versions:
+  - sha: fa37b7e151644cff7ad3cc091fadbeb4ab6216c9
+    changeNotes: Person API bumped to V2 and fixed the Create Lead option.
   - sha: 1ffa603e8e6ef3b96c4e166b8291d5b46c6af0dc
     changeNotes: Person API version Bump and Fixed Lead section.
   - sha: 90ee2c26f75fc7a2ad0b7f60f553d3e3d9325d83
