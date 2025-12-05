@@ -36,6 +36,9 @@ The **Pipedrive Tag for GTM Server-Side** allows you to create new persons and l
     * **Dataset ID**: Required.
     * **Table ID**: Required.
 
+## Useful Resources
+- [How to set up PipeDrive tag using server GTM](https://stape.io/blog/pipedrive-gtm-tag-setup)
+
 ## Open Source
 
 The **Pipedrive Tag for GTM Server Side** is developed and maintained by the [Stape Team](https://stape.io/) under the Apache 2.0 license.
