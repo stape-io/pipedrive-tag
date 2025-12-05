@@ -1,10 +1,11 @@
 homepage: 'https://stape.io/'
 documentation: 'https://github.com/stape-io/pipedrive-tag'
 versions:
-  - sha: fa37b7e151644cff7ad3cc091fadbeb4ab6216c9
-    changeNotes: Person API bumped to V2 and fixed the Create Lead option.
-  - sha: 1ffa603e8e6ef3b96c4e166b8291d5b46c6af0dc
-    changeNotes: Person API version Bump and Fixed Lead section.
+  - sha: 562556e586eddeb2d171dc3448ec94eb02830567
+    changeNotes: |2
+      BREAKING CHANGES!
+      Carefuly review your Pipedrive tags that use the Create Person option and use Custom Fields.
+      Person API bumped to V2 and fixed the Create Lead option.
   - sha: 90ee2c26f75fc7a2ad0b7f60f553d3e3d9325d83
     changeNotes: Fix tag naming.
   - sha: 9c146321a7a95e5ddddc503398d39a78468669c6
