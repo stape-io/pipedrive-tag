@@ -48,12 +48,16 @@ function createPerson() {
   if (data.email) postBody.emails = [{ value: data.email }];
   if (data.phone) postBody.phones = [{ value: data.phone }];
 
+  const customFields = makeTableMap(data.personCustomFields || [], 'field', 'value');
+  if (customFields) postBody.custom_fields = customFields;
+
   // Backward compatibility v1 -> v2.
   if (getType(postBody.visible_to) === 'string') {
     postBody.visible_to = makeInteger(postBody.visible_to);
   }
-  if (getType(postBody.label) === 'number') {
-    postBody.label_ids = [postBody.label];
+  if (postBody.label) {
+    postBody.label_ids = [makeInteger(postBody.label)];
+    postBody.label = undefined;
   }
 
   log({

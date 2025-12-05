@@ -132,6 +132,29 @@ ___TEMPLATE_PARAMETERS___
         ],
         "help": "Check \u003ca href\u003d\"https://developers.pipedrive.com/docs/api/v1/Persons\"\u003e this documentation\u003c/a\u003e for expected parameters. Bear in mind that if using any unsupported parameter the API call will fail.",
         "displayName": "Additional Parameters"
+      },
+      {
+        "type": "SIMPLE_TABLE",
+        "name": "personCustomFields",
+        "displayName": "Custom Fields",
+        "simpleTableColumns": [
+          {
+            "defaultValue": "",
+            "displayName": "Field",
+            "name": "field",
+            "type": "TEXT",
+            "valueHint": "dcf558aac1ae4e8c4f849ba5e668430d8df9be12",
+            "isUnique": true
+          },
+          {
+            "defaultValue": "",
+            "displayName": "Value",
+            "name": "value",
+            "type": "TEXT"
+          }
+        ],
+        "newRowButtonText": "Add Custom Field",
+        "help": "The API V1 required the custom fields to be at root level and their keys flattened.\n\u003cbr/\u003e\nIn the API V2, the custom fields are not at root level and flattened keys are not used anymore.\n\u003cbr/\u003e\nCheck \u003ca href\u003d\"https://pipedrive.readme.io/docs/pipedrive-api-v2-migration-guide#custom-fields\"\u003ehow to migrate\u003c/a\u003e from the old syntax to the new one."
       }
     ],
     "enablingConditions": [
@@ -427,12 +450,16 @@ function createPerson() {
   if (data.email) postBody.emails = [{ value: data.email }];
   if (data.phone) postBody.phones = [{ value: data.phone }];
 
+  const customFields = makeTableMap(data.personCustomFields || [], 'field', 'value');
+  if (customFields) postBody.custom_fields = customFields;
+
   // Backward compatibility v1 -> v2.
   if (getType(postBody.visible_to) === 'string') {
     postBody.visible_to = makeInteger(postBody.visible_to);
   }
-  if (getType(postBody.label) === 'number') {
-    postBody.label_ids = [postBody.label];
+  if (postBody.label) {
+    postBody.label_ids = [makeInteger(postBody.label)];
+    postBody.label = undefined;
   }
 
   log({
