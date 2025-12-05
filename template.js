@@ -7,26 +7,25 @@ const makeTableMap = require('makeTableMap');
 const getTimestampMillis = require('getTimestampMillis');
 const BigQuery = require('BigQuery');
 const getAllEventData = require('getAllEventData');
-const makeNumber = require('makeNumber');
+const makeString = require('makeString');
+const makeInteger = require('makeInteger');
+const getType = require('getType');
 
 /*==============================================================================
 ==============================================================================*/
 
 const eventData = getAllEventData();
-let person;
-let lead;
 
-if (checkGuardClauses()) return;
+if (checkGuardClauses(data, eventData)) return;
 
 if (data.type === 'person') createPerson();
-
-if (data.type === 'lead') {
-  if (data.createPerson) createPerson();
+else if (data.type === 'lead') {
+  if (data.createPersonBeforeLead) createPerson();
   else createLead();
 }
 
 if (data.useOptimisticScenario) {
-  data.gtmOnSuccess();
+  return data.gtmOnSuccess();
 }
 
 /*==============================================================================
@@ -45,11 +44,17 @@ function createPerson() {
     method: 'POST'
   };
 
-  if (data.name || data.newLeadFullName) postBody.name = data.name || data.newLeadFullName;
-  if (data.newLeadFirstName) postBody.first_name = data.newLeadFirstName;
-  if (data.newLeadLastName) postBody.last_name = data.newLeadLastName;
+  if (data.name) postBody.name = data.name;
   if (data.email) postBody.emails = [{ value: data.email }];
   if (data.phone) postBody.phones = [{ value: data.phone }];
+
+  // Backward compatibility v1 -> v2.
+  if (getType(postBody.visible_to) === 'string') {
+    postBody.visible_to = makeInteger(postBody.visible_to);
+  }
+  if (getType(postBody.label) === 'number') {
+    postBody.label_ids = [postBody.label];
+  }
 
   log({
     Name: 'Pipedrive',
@@ -62,7 +67,6 @@ function createPerson() {
 
   return sendHttpRequest(requestUrl, requestOptions, JSON.stringify(postBody))
     .then((response) => {
-      const body = JSON.parse(response.body);
       log({
         Name: 'Pipedrive',
         Type: 'Response',
@@ -72,22 +76,16 @@ function createPerson() {
         ResponseBody: response.body
       });
 
-      if (body.success) {
+      const body = JSON.parse(response.body || '{}');
+      if (response.statusCode === 200 && body.success) {
         if (data.type === 'lead') {
           const personId = body.data.id;
           const organizationId = body.data.org_id;
           return createLead(personId, organizationId);
         } else {
-          data.gtmOnSuccess();
+          return data.gtmOnSuccess();
         }
       } else {
-        log({
-          Name: 'Pipedrive',
-          Type: 'Message',
-          EventName: 'Lead',
-          Message: body.code,
-          Reason: body.error
-        });
         return data.gtmOnFailure();
       }
     })
@@ -97,8 +95,9 @@ function createPerson() {
         Type: 'Message',
         EventName: 'Person',
         Message: 'API call failed or timed out',
-        Reason: error.reason
+        Reason: error
       });
+      return data.gtmOnFailure();
     });
 }
 
@@ -114,21 +113,11 @@ function createLead(personId, organizationId) {
     method: 'POST'
   };
 
-  if (!data.title) {
-    log({
-      Name: 'Pipedrive',
-      Type: 'Message',
-      EventName: 'Lead',
-      Message: 'API not called',
-      Reason: 'Title is required for creating Lead'
-    });
-    return data.gtmOnFailure();
-  }
   personId = personId || data.personId;
   organizationId = organizationId || data.organizationId;
-  postBody.title = data.title;
-  if (personId) postBody.person_id = makeNumber(personId);
-  if (organizationId) postBody.organization_id = makeNumber(organizationId);
+  postBody.title = data.title ? makeString(data.title) : undefined;
+  if (personId) postBody.person_id = makeInteger(personId);
+  if (organizationId) postBody.organization_id = makeInteger(organizationId);
 
   log({
     Name: 'Pipedrive',
@@ -141,7 +130,6 @@ function createLead(personId, organizationId) {
 
   return sendHttpRequest(requestUrl, requestOptions, JSON.stringify(postBody))
     .then((response) => {
-      const body = JSON.parse(response.body);
       log({
         Name: 'Pipedrive',
         Type: 'Response',
@@ -151,16 +139,10 @@ function createLead(personId, organizationId) {
         ResponseBody: response.body
       });
 
-      if (body.success) {
+      const body = JSON.parse(response.body || '{}');
+      if (response.statusCode === 201 && body.success) {
         return data.gtmOnSuccess();
       } else {
-        log({
-          Name: 'Pipedrive',
-          Type: 'Message',
-          EventName: 'Lead',
-          Message: body.code,
-          Reason: body.error
-        });
         return data.gtmOnFailure();
       }
     })
@@ -170,8 +152,9 @@ function createLead(personId, organizationId) {
         Type: 'Message',
         EventName: 'Lead',
         Message: 'API call failed or timed out',
-        Reason: error.reason
+        Reason: error
       });
+      return data.gtmOnFailure();
     });
 }
 
@@ -179,47 +162,16 @@ function createLead(personId, organizationId) {
 HELPERS
 ==============================================================================*/
 
-function checkGuardClauses() {
-  const url = eventData.page_location || getRequestHeader('referer');
-  const createPersonRequirement =
-    !(data.newLeadFullName || (data.newLeadFirstName && data.newLeadLastName)) ||
-    (data.newLeadFullName && (data.newLeadFirstName || data.newLeadLastName));
-
+function checkGuardClauses(data, eventData) {
   if (!isConsentGivenOrNotRequired(data, eventData)) {
     data.gtmOnSuccess();
     return true;
   }
 
+  const url = eventData.page_location || getRequestHeader('referer');
   if (url && url.lastIndexOf('https://gtm-msr.appspot.com/', 0) === 0) {
     data.gtmOnSuccess();
     return true;
-  }
-
-  if (data.createPerson && createPersonRequirement) {
-    log({
-      Name: 'Pipedrive',
-      Type: 'Message',
-      EventName: 'Lead',
-      Message: 'API not called',
-      Reason: 'Provide either Full Name OR both First Name and Last Name to create a new Person.'
-    });
-    data.gtmOnFailure();
-    return true;
-  }
-
-  if (data.type === 'lead' && !data.createPerson) {
-    if (!data.personId && !data.organizationId) {
-      //requirement for lead request
-      log({
-        Name: 'Pipedrive',
-        Type: 'Message',
-        EventName: 'Lead',
-        Message: 'API not called',
-        Reason: 'Person ID or Organization ID must be set to create a Lead.'
-      });
-      data.gtmOnFailure();
-      return true;
-    }
   }
 }
 
@@ -235,7 +187,7 @@ function log(rawDataToLog) {
   if (determinateIsLoggingEnabled()) logDestinationsHandlers.console = logConsole;
   if (determinateIsLoggingEnabledForBigQuery()) logDestinationsHandlers.bigQuery = logToBigQuery;
 
-  //rawDataToLog.TraceId = getRequestHeader('trace-id');
+  rawDataToLog.TraceId = getRequestHeader('trace-id');
 
   const keyMappings = {
     // No transformation for Console is needed.

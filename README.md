@@ -1,6 +1,6 @@
 # Pipedrive Tag for GTM Server-Side
 
-This server-side tag allows you to create new persons and leads in Pipedrive directly from your Google Tag Manager Server container.
+The **Pipedrive Tag for GTM Server-Side** allows you to create new persons and leads in Pipedrive directly from your Google Tag Manager Server container.
 
 ## Features
 * **Entity Creation**: Supports creating **Persons** and **Leads**.
@@ -36,8 +36,6 @@ This server-side tag allows you to create new persons and leads in Pipedrive dir
     * **Dataset ID**: Required.
     * **Table ID**: Required.
 
-## Permissions
-This template requires the following permissions:
-* **Access to Global Variables**: Reads event data and container version.
-* **Send HTTP Requests**: Grants access to `https://api.pipedrive.com/`.
-* **Access BigQuery**: Requires `write` access if BigQuery logging is enabled.
+## Open Source
+
+The **Pipedrive Tag for GTM Server Side** is developed and maintained by the [Stape Team](https://stape.io/) under the Apache 2.0 license.
