@@ -131,7 +131,8 @@ ___TEMPLATE_PARAMETERS___
           }
         ],
         "help": "Check \u003ca href\u003d\"https://developers.pipedrive.com/docs/api/v1/Persons\"\u003e this documentation\u003c/a\u003e for expected parameters. Bear in mind that if using any unsupported parameter the API call will fail.",
-        "displayName": "Additional Parameters"
+        "displayName": "Additional Parameters",
+        "newRowButtonText": "Add Parameter"
       },
       {
         "type": "SIMPLE_TABLE",
@@ -299,101 +300,6 @@ ___TEMPLATE_PARAMETERS___
         "defaultValue": "optional"
       }
     ]
-  },
-  {
-    "displayName": "Logs Settings",
-    "name": "logsGroup",
-    "groupStyle": "ZIPPY_CLOSED",
-    "type": "GROUP",
-    "subParams": [
-      {
-        "type": "RADIO",
-        "name": "logType",
-        "radioItems": [
-          {
-            "value": "no",
-            "displayValue": "Do not log"
-          },
-          {
-            "value": "debug",
-            "displayValue": "Log to console during debug and preview"
-          },
-          {
-            "value": "always",
-            "displayValue": "Always log to console"
-          }
-        ],
-        "simpleValueType": true,
-        "defaultValue": "debug"
-      }
-    ]
-  },
-  {
-    "displayName": "BigQuery Logs Settings",
-    "name": "bigQueryLogsGroup",
-    "groupStyle": "ZIPPY_CLOSED",
-    "type": "GROUP",
-    "subParams": [
-      {
-        "type": "RADIO",
-        "name": "bigQueryLogType",
-        "radioItems": [
-          {
-            "value": "no",
-            "displayValue": "Do not log to BigQuery"
-          },
-          {
-            "value": "always",
-            "displayValue": "Log to BigQuery"
-          }
-        ],
-        "simpleValueType": true,
-        "defaultValue": "no"
-      },
-      {
-        "type": "GROUP",
-        "name": "logsBigQueryConfigGroup",
-        "groupStyle": "NO_ZIPPY",
-        "subParams": [
-          {
-            "type": "TEXT",
-            "name": "logBigQueryProjectId",
-            "displayName": "BigQuery Project ID",
-            "simpleValueType": true,
-            "help": "Optional.  \u003cbr\u003e\u003cbr\u003e  If omitted, it will be retrieved from the environment variable \u003cI\u003eGOOGLE_CLOUD_PROJECT\u003c/i\u003e where the server container is running. If the server container is running on Google Cloud, \u003cI\u003eGOOGLE_CLOUD_PROJECT\u003c/i\u003e will already be set to the Google Cloud project\u0027s ID."
-          },
-          {
-            "type": "TEXT",
-            "name": "logBigQueryDatasetId",
-            "displayName": "BigQuery Dataset ID",
-            "simpleValueType": true,
-            "valueValidators": [
-              {
-                "type": "NON_EMPTY"
-              }
-            ]
-          },
-          {
-            "type": "TEXT",
-            "name": "logBigQueryTableId",
-            "displayName": "BigQuery Table ID",
-            "simpleValueType": true,
-            "valueValidators": [
-              {
-                "type": "NON_EMPTY"
-              }
-            ]
-          }
-        ],
-        "enablingConditions": [
-          {
-            "paramName": "bigQueryLogType",
-            "paramValue": "always",
-            "type": "EQUALS"
-          }
-        ]
-      }
-    ]
   }
 ]
 
@@ -403,11 +309,7 @@ ___SANDBOXED_JS_FOR_SERVER___
 const sendHttpRequest = require('sendHttpRequest');
 const JSON = require('JSON');
 const getRequestHeader = require('getRequestHeader');
-const logToConsole = require('logToConsole');
-const getContainerVersion = require('getContainerVersion');
 const makeTableMap = require('makeTableMap');
-const getTimestampMillis = require('getTimestampMillis');
-const BigQuery = require('BigQuery');
 const getAllEventData = require('getAllEventData');
 const makeString = require('makeString');
 const makeInteger = require('makeInteger');
@@ -462,26 +364,8 @@ function createPerson() {
     postBody.label = undefined;
   }
 
-  log({
-    Name: 'Pipedrive',
-    Type: 'Request',
-    EventName: 'Person',
-    RequestMethod: 'POST',
-    RequestUrl: requestUrl,
-    RequestBody: postBody
-  });
-
   return sendHttpRequest(requestUrl, requestOptions, JSON.stringify(postBody))
     .then((response) => {
-      log({
-        Name: 'Pipedrive',
-        Type: 'Response',
-        EventName: 'Person',
-        ResponseStatusCode: response.statusCode,
-        ResponseHeaders: response.headers,
-        ResponseBody: response.body
-      });
-
       const body = JSON.parse(response.body || '{}');
       if (response.statusCode === 200 && body.success) {
         if (data.type === 'lead') {
@@ -496,13 +380,6 @@ function createPerson() {
       }
     })
     .catch((error) => {
-      log({
-        Name: 'Pipedrive',
-        Type: 'Message',
-        EventName: 'Person',
-        Message: 'API call failed or timed out',
-        Reason: error
-      });
       return data.gtmOnFailure();
     });
 }
@@ -525,26 +402,8 @@ function createLead(personId, organizationId) {
   if (personId) postBody.person_id = makeInteger(personId);
   if (organizationId) postBody.organization_id = makeInteger(organizationId);
 
-  log({
-    Name: 'Pipedrive',
-    Type: 'Request',
-    EventName: 'Lead',
-    RequestMethod: 'POST',
-    RequestUrl: requestUrl,
-    RequestBody: postBody
-  });
-
   return sendHttpRequest(requestUrl, requestOptions, JSON.stringify(postBody))
     .then((response) => {
-      log({
-        Name: 'Pipedrive',
-        Type: 'Response',
-        EventName: 'Lead',
-        ResponseStatusCode: response.statusCode,
-        ResponseHeaders: response.headers,
-        ResponseBody: response.body
-      });
-
       const body = JSON.parse(response.body || '{}');
       if (response.statusCode === 201 && body.success) {
         return data.gtmOnSuccess();
@@ -553,13 +412,6 @@ function createLead(personId, organizationId) {
       }
     })
     .catch((error) => {
-      log({
-        Name: 'Pipedrive',
-        Type: 'Message',
-        EventName: 'Lead',
-        Message: 'API call failed or timed out',
-        Reason: error
-      });
       return data.gtmOnFailure();
     });
 }
@@ -588,94 +440,6 @@ function isConsentGivenOrNotRequired(data, eventData) {
   return xGaGcs[2] === '1';
 }
 
-function log(rawDataToLog) {
-  const logDestinationsHandlers = {};
-  if (determinateIsLoggingEnabled()) logDestinationsHandlers.console = logConsole;
-  if (determinateIsLoggingEnabledForBigQuery()) logDestinationsHandlers.bigQuery = logToBigQuery;
-
-  rawDataToLog.TraceId = getRequestHeader('trace-id');
-
-  const keyMappings = {
-    // No transformation for Console is needed.
-    bigQuery: {
-      Name: 'tag_name',
-      Type: 'type',
-      TraceId: 'trace_id',
-      EventName: 'event_name',
-      RequestMethod: 'request_method',
-      RequestUrl: 'request_url',
-      RequestBody: 'request_body',
-      ResponseStatusCode: 'response_status_code',
-      ResponseHeaders: 'response_headers',
-      ResponseBody: 'response_body'
-    }
-  };
-
-  for (const logDestination in logDestinationsHandlers) {
-    const handler = logDestinationsHandlers[logDestination];
-    if (!handler) continue;
-
-    const mapping = keyMappings[logDestination];
-    const dataToLog = mapping ? {} : rawDataToLog;
-
-    if (mapping) {
-      for (const key in rawDataToLog) {
-        const mappedKey = mapping[key] || key;
-        dataToLog[mappedKey] = rawDataToLog[key];
-      }
-    }
-
-    handler(dataToLog);
-  }
-}
-
-function logConsole(dataToLog) {
-  logToConsole(JSON.stringify(dataToLog));
-}
-
-function logToBigQuery(dataToLog) {
-  const connectionInfo = {
-    projectId: data.logBigQueryProjectId,
-    datasetId: data.logBigQueryDatasetId,
-    tableId: data.logBigQueryTableId
-  };
-
-  dataToLog.timestamp = getTimestampMillis();
-
-  ['request_body', 'response_headers', 'response_body'].forEach((p) => {
-    dataToLog[p] = JSON.stringify(dataToLog[p]);
-  });
-
-  BigQuery.insert(connectionInfo, [dataToLog], { ignoreUnknownValues: true });
-}
-
-function determinateIsLoggingEnabled() {
-  const containerVersion = getContainerVersion();
-  const isDebug = !!(
-    containerVersion &&
-    (containerVersion.debugMode || containerVersion.previewMode)
-  );
-
-  if (!data.logType) {
-    return isDebug;
-  }
-
-  if (data.logType === 'no') {
-    return false;
-  }
-
-  if (data.logType === 'debug') {
-    return isDebug;
-  }
-
-  return data.logType === 'always';
-}
-
-function determinateIsLoggingEnabledForBigQuery() {
-  if (data.bigQueryLogType === 'no') return false;
-  return data.bigQueryLogType === 'always';
-}
-
 
 ___SERVER_PERMISSIONS___
 
@@ -692,21 +456,6 @@ ___SERVER_PERMISSIONS___
           "value": {
             "type": 2,
             "listItem": [
-              {
-                "type": 3,
-                "mapKey": [
-                  {
-                    "type": 1,
-                    "string": "headerName"
-                  }
-                ],
-                "mapValue": [
-                  {
-                    "type": 1,
-                    "string": "trace-id"
-                  }
-                ]
-              },
               {
                 "type": 3,
                 "mapKey": [
@@ -763,37 +512,6 @@ ___SERVER_PERMISSIONS___
   {
     "instance": {
       "key": {
-        "publicId": "logging",
-        "versionId": "1"
-      },
-      "param": [
-        {
-          "key": "environments",
-          "value": {
-            "type": 1,
-            "string": "all"
-          }
-        }
-      ]
-    },
-    "clientAnnotations": {
-      "isEditedByUser": true
-    },
-    "isRequired": true
-  },
-  {
-    "instance": {
-      "key": {
-        "publicId": "read_container_data",
-        "versionId": "1"
-      },
-      "param": []
-    },
-    "isRequired": true
-  },
-  {
-    "instance": {
-      "key": {
         "publicId": "send_http",
         "versionId": "1"
       },
@@ -844,67 +562,6 @@ ___SERVER_PERMISSIONS___
       "isEditedByUser": true
     },
     "isRequired": true
-  },
-  {
-    "instance": {
-      "key": {
-        "publicId": "access_bigquery",
-        "versionId": "1"
-      },
-      "param": [
-        {
-          "key": "allowedTables",
-          "value": {
-            "type": 2,
-            "listItem": [
-              {
-                "type": 3,
-                "mapKey": [
-                  {
-                    "type": 1,
-                    "string": "projectId"
-                  },
-                  {
-                    "type": 1,
-                    "string": "datasetId"
-                  },
-                  {
-                    "type": 1,
-                    "string": "tableId"
-                  },
-                  {
-                    "type": 1,
-                    "string": "operation"
-                  }
-                ],
-                "mapValue": [
-                  {
-                    "type": 1,
-                    "string": "*"
-                  },
-                  {
-                    "type": 1,
-                    "string": "*"
-                  },
-                  {
-                    "type": 1,
-                    "string": "*"
-                  },
-                  {
-                    "type": 1,
-                    "string": "write"
-                  }
-                ]
-              }
-            ]
-          }
-        }
-      ]
-    },
-    "clientAnnotations": {
-      "isEditedByUser": true
-    },
-    "isRequired": true
   }
 ]
 
@@ -916,6 +573,8 @@ scenarios: []
 
 ___NOTES___
 
-Created on 1/2/2025, 1:56:13 PM
+2026-05-25 Change Notes:
+ - Logging removal.
 
+Created on 1/2/2025, 1:56:13 PM
 
