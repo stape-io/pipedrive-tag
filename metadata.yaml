@@ -1,6 +1,8 @@
 homepage: 'https://stape.io/'
 documentation: 'https://github.com/stape-io/pipedrive-tag'
 versions:
+  - sha: 84f8c063100371b9bcb07157cd345543c761614f
+    changeNotes: Logging removal.
   - sha: 562556e586eddeb2d171dc3448ec94eb02830567
     changeNotes: |2
       BREAKING CHANGES!
